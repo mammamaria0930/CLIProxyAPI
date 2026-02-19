@@ -46,9 +46,6 @@ func TestConvertOpenAIRequestToClaude_MapsStructuredOutputAndStrictTool(t *testi
 	if gjson.Get(raw, "output_config.format.type").String() != "json_schema" {
 		t.Fatalf("expected output_config.format.type=json_schema, got %s", gjson.Get(raw, "output_config.format.type").Raw)
 	}
-	if gjson.Get(raw, "output_config.format.name").String() != "answer_schema" {
-		t.Fatalf("expected output_config.format.name=answer_schema, got %s", gjson.Get(raw, "output_config.format.name").Raw)
-	}
 	if gjson.Get(raw, "output_config.format.schema.properties.answer.type").String() != "string" {
 		t.Fatalf("expected structured schema to be mapped, got %s", gjson.Get(raw, "output_config.format.schema").Raw)
 	}

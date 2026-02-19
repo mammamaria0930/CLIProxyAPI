@@ -266,9 +266,6 @@ func ConvertOpenAIRequestToClaude(modelName string, inputRawJSON []byte, stream 
 			if schema := jsonSchema.Get("schema"); schema.Exists() {
 				claudeFormat, _ = sjson.SetRaw(claudeFormat, "schema", schema.Raw)
 			}
-			if name := jsonSchema.Get("name"); name.Exists() {
-				claudeFormat, _ = sjson.Set(claudeFormat, "name", name.Value())
-			}
 			out, _ = sjson.SetRaw(out, "output_config.format", claudeFormat)
 		}
 	}

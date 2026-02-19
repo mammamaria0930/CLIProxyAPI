@@ -42,9 +42,6 @@ func TestConvertOpenAIResponsesRequestToClaude_MapsTextFormatSchemaAndToolStrict
 	if gjson.Get(raw, "output_config.format.type").String() != "json_schema" {
 		t.Fatalf("expected output_config.format.type=json_schema, got %s", gjson.Get(raw, "output_config.format.type").Raw)
 	}
-	if gjson.Get(raw, "output_config.format.name").String() != "result" {
-		t.Fatalf("expected output_config.format.name=result, got %s", gjson.Get(raw, "output_config.format.name").Raw)
-	}
 	if gjson.Get(raw, "output_config.format.schema.properties.ok.type").String() != "boolean" {
 		t.Fatalf("expected structured schema to be mapped, got %s", gjson.Get(raw, "output_config.format.schema").Raw)
 	}

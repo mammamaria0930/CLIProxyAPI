@@ -291,18 +291,12 @@ func ConvertOpenAIResponsesRequestToClaude(modelName string, inputRawJSON []byte
 		if schema := textFormat.Get("schema"); schema.Exists() {
 			claudeFormat, _ = sjson.SetRaw(claudeFormat, "schema", schema.Raw)
 		}
-		if name := textFormat.Get("name"); name.Exists() {
-			claudeFormat, _ = sjson.Set(claudeFormat, "name", name.Value())
-		}
 		out, _ = sjson.SetRaw(out, "output_config.format", claudeFormat)
 	} else if responseFormat := root.Get("response_format"); responseFormat.Exists() && responseFormat.Get("type").String() == "json_schema" {
 		if jsonSchema := responseFormat.Get("json_schema"); jsonSchema.Exists() {
 			claudeFormat := `{"type":"json_schema"}`
 			if schema := jsonSchema.Get("schema"); schema.Exists() {
 				claudeFormat, _ = sjson.SetRaw(claudeFormat, "schema", schema.Raw)
-			}
-			if name := jsonSchema.Get("name"); name.Exists() {
-				claudeFormat, _ = sjson.Set(claudeFormat, "name", name.Value())
 			}
 			out, _ = sjson.SetRaw(out, "output_config.format", claudeFormat)
 		}
