@@ -9,6 +9,7 @@ import (
 
 func ConvertOpenAIResponsesRequestToCodex(modelName string, inputRawJSON []byte, _ bool) []byte {
 	rawJSON := inputRawJSON
+	hasStrictStructuredOutput := false
 
 	inputResult := gjson.GetBytes(rawJSON, "input")
 	if inputResult.Type == gjson.String {
@@ -18,7 +19,24 @@ func ConvertOpenAIResponsesRequestToCodex(modelName string, inputRawJSON []byte,
 
 	rawJSON, _ = sjson.SetBytes(rawJSON, "stream", true)
 	rawJSON, _ = sjson.SetBytes(rawJSON, "store", false)
-	rawJSON, _ = sjson.SetBytes(rawJSON, "parallel_tool_calls", true)
+
+	if v := gjson.GetBytes(rawJSON, "text.format.strict"); v.Exists() && v.Bool() {
+		hasStrictStructuredOutput = true
+	}
+	if v := gjson.GetBytes(rawJSON, "response_format.json_schema.strict"); v.Exists() && v.Bool() {
+		hasStrictStructuredOutput = true
+	}
+	if tools := gjson.GetBytes(rawJSON, "tools"); tools.Exists() && tools.IsArray() {
+		tools.ForEach(func(_, tool gjson.Result) bool {
+			if strict := tool.Get("strict"); strict.Exists() && strict.Bool() {
+				hasStrictStructuredOutput = true
+				return false
+			}
+			return true
+		})
+	}
+
+	rawJSON, _ = sjson.SetBytes(rawJSON, "parallel_tool_calls", !hasStrictStructuredOutput)
 	rawJSON, _ = sjson.SetBytes(rawJSON, "include", []string{"reasoning.encrypted_content"})
 	// Codex Responses rejects token limit fields, so strip them out before forwarding.
 	rawJSON, _ = sjson.DeleteBytes(rawJSON, "max_output_tokens")

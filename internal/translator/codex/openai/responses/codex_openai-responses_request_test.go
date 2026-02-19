@@ -264,19 +264,71 @@ func TestConvertSystemRoleToDeveloper_AssistantRole(t *testing.T) {
 	}
 }
 
-func TestUserFieldDeletion(t *testing.T) {  
+func TestUserFieldDeletion(t *testing.T) {
 	inputJSON := []byte(`{  
 		"model": "gpt-5.2",  
 		"user": "test-user",  
 		"input": [{"role": "user", "content": "Hello"}]  
-	}`)  
-	  
-	output := ConvertOpenAIResponsesRequestToCodex("gpt-5.2", inputJSON, false)  
-	outputStr := string(output)  
-	  
-	// Verify user field is deleted  
-	userField := gjson.Get(outputStr, "user")  
+	}`)
+
+	output := ConvertOpenAIResponsesRequestToCodex("gpt-5.2", inputJSON, false)
+	outputStr := string(output)
+
+	// Verify user field is deleted
+	userField := gjson.Get(outputStr, "user")
 	if userField.Exists() {
 		t.Errorf("user field should be deleted, but it was found with value: %s", userField.Raw)
+	}
+}
+
+func TestConvertOpenAIResponsesRequestToCodex_DisablesParallelWhenStrictSchema(t *testing.T) {
+	inputJSON := []byte(`{
+		"model": "gpt-5.2",
+		"input": [{"type":"message","role":"user","content":[{"type":"input_text","text":"hello"}]}],
+		"text": {
+			"format": {
+				"type": "json_schema",
+				"strict": true,
+				"schema": {
+					"type": "object",
+					"properties": {"answer": {"type": "string"}},
+					"required": ["answer"],
+					"additionalProperties": false
+				}
+			}
+		}
+	}`)
+
+	output := ConvertOpenAIResponsesRequestToCodex("gpt-5.2", inputJSON, false)
+	outputStr := string(output)
+
+	parallelCalls := gjson.Get(outputStr, "parallel_tool_calls")
+	if parallelCalls.Bool() {
+		t.Errorf("parallel_tool_calls should be false for strict structured output, got true")
+	}
+}
+
+func TestConvertOpenAIResponsesRequestToCodex_DisablesParallelWhenStrictTool(t *testing.T) {
+	inputJSON := []byte(`{
+		"model": "gpt-5.2",
+		"input": [{"type":"message","role":"user","content":[{"type":"input_text","text":"hello"}]}],
+		"tools": [{
+			"type": "function",
+			"name": "submit",
+			"strict": true,
+			"parameters": {
+				"type": "object",
+				"properties": {"answer": {"type": "string"}},
+				"required": ["answer"]
+			}
+		}]
+	}`)
+
+	output := ConvertOpenAIResponsesRequestToCodex("gpt-5.2", inputJSON, false)
+	outputStr := string(output)
+
+	parallelCalls := gjson.Get(outputStr, "parallel_tool_calls")
+	if parallelCalls.Bool() {
+		t.Errorf("parallel_tool_calls should be false for strict tools, got true")
 	}
 }
